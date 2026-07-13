@@ -25,3 +25,6 @@ def get_db() -> Database:
 
 def get_trips_collection() -> Collection:
     return get_db()["trips"]
+
+def get_chat_collection() -> Collection:
+    return get_db()["chats"]

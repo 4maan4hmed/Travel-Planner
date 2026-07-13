@@ -11,7 +11,7 @@ from app.models.model import (
 from app.repositories import tripRepositories
 
 
-def create_trip(request: TripCreateRequest, user_id: str) -> Trip:
+async def create_trip(request: TripCreateRequest, user_id: str) -> Trip:
     if request.end_date < request.start_date:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -30,12 +30,12 @@ def create_trip(request: TripCreateRequest, user_id: str) -> Trip:
     return tripRepositories.insert_trip(trip)
 
 
-def list_trips(user_id: str) -> TripListResponse:
+async def list_trips(user_id: str) -> TripListResponse:
     trips = tripRepositories.find_trips_by_user(user_id)
     return TripListResponse(trips=trips)
 
 
-def delete_trip(trip_id: str, user_id: str) -> TripDeleteResponse:
+async def delete_trip(trip_id: str, user_id: str) -> TripDeleteResponse:
     deleted = tripRepositories.delete_trip(trip_id, user_id)
     if not deleted:
         raise HTTPException(
