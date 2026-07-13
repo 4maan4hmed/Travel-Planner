@@ -3,6 +3,7 @@ from uuid import uuid4
 
 from fastapi import HTTPException, status
 
+from app.agent.travel_agent import run_travel_agent
 from app.models.model import (
     Chat,
     ChatCreateRequest,
@@ -67,12 +68,14 @@ async def send_message(
         content=request.content,
         created_at=now,
     )
+    resp = run_travel_agent(request.content)
     assistant_message = Message(
         id=str(uuid4()),
         role=MessageRole.ASSISTANT,
-        content="Got it — I'll help plan that.",
+        content=resp,
         created_at=now,
     )
+    #assistant_message = agent_invoke()
     chat = await chatRepositories.append_messages(
         session_id,
         user_id,
