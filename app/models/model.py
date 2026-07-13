@@ -1,11 +1,6 @@
-from pydantic import BaseModel
-from typing import Literal
+from pydantic import BaseModel, Enum
 from datetime import datetime
 
-class Activity(BaseModel):
-    id: str
-    location: str
-    description: str
 
 class Trip(BaseModel):
     id: str
@@ -14,13 +9,18 @@ class Trip(BaseModel):
     to_location: str
     start_date: datetime
     end_date: datetime
-    activities: list[Activity]
+
+
+class MessageRole(str, Enum):
+    USER = "user"
+    ASSISTANT = "assistant"
+    SYSTEM = "system"
 
 class Message(BaseModel):
     session_id: str
     id: str
     content: str
-    role: Literal["user", "assistant"]
+    role: MessageRole
     created_at: datetime
 
 class Chat(BaseModel):
@@ -29,5 +29,4 @@ class Chat(BaseModel):
 
 class ChatSession(BaseModel):
     session_id: str
-    messages: list[Message]
     created_at: datetime
