@@ -17,7 +17,7 @@ def find_trips_by_user(user_id: str) -> list[Trip]:
     trips: list[Trip] = []
     for doc in docs:
         trip_id = str(doc.pop("_id"))
-        trips.append(Trip(trip_id=trip_id, **doc))
+        trips.append(Trip(**doc, trip_id=trip_id))
     return trips
 
 
