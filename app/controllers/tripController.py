@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends, status
+from typing import NoReturn
+
+from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.deps import get_current_user_id
 from app.models.model import (
@@ -8,8 +10,21 @@ from app.models.model import (
     TripDeleteResponse,
 )
 from app.services import tripService
+from app.services.tripService import TripNotFoundError, TripValidationError
 
 router = APIRouter(prefix="/trip", tags=["trip"])
+
+
+def _map_trip_error(exc: TripValidationError | TripNotFoundError) -> NoReturn:
+    if isinstance(exc, TripValidationError):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=exc.message,
+        ) from exc
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail=exc.message,
+    ) from exc
 
 
 @router.post(
@@ -22,7 +37,10 @@ async def create_trip(
     request: TripCreateRequest,
     user_id: str = Depends(get_current_user_id),
 ) -> Trip:
-    return await tripService.create_trip(request, user_id)
+    try:
+        return await tripService.create_trip(request, user_id)
+    except (TripValidationError, TripNotFoundError) as exc:
+        _map_trip_error(exc)
 
 
 @router.get(
@@ -45,4 +63,7 @@ async def delete_trip(
     trip_id: str,
     user_id: str = Depends(get_current_user_id),
 ) -> TripDeleteResponse:
-    return await tripService.delete_trip(trip_id, user_id)
+    try:
+        return await tripService.delete_trip(trip_id, user_id)
+    except (TripValidationError, TripNotFoundError) as exc:
+        _map_trip_error(exc)

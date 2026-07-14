@@ -1,8 +1,8 @@
 from datetime import datetime
 
-from fastapi import HTTPException, status
-
 from app.models.model import (
+    FlightDetails,
+    LocationVisit,
     Trip,
     TripCreateRequest,
     TripDeleteResponse,
@@ -11,12 +11,25 @@ from app.models.model import (
 from app.repositories import tripRepositories
 
 
+class TripError(Exception):
+    """Domain error for trip operations (not HTTP-specific)."""
+
+    def __init__(self, message: str):
+        self.message = message
+        super().__init__(message)
+
+
+class TripValidationError(TripError):
+    pass
+
+
+class TripNotFoundError(TripError):
+    pass
+
+
 async def create_trip(request: TripCreateRequest, user_id: str) -> Trip:
     if request.end_date < request.start_date:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="end_date must be on or after start_date",
-        )
+        raise TripValidationError("end_date must be on or after start_date")
 
     trip = Trip(
         user_id=user_id,
@@ -35,11 +48,30 @@ async def list_trips(user_id: str) -> TripListResponse:
     return TripListResponse(trips=trips)
 
 
+async def add_flight_to_trip(
+    trip_id: str,
+    user_id: str,
+    flight_details: FlightDetails,
+) -> Trip:
+    trip = await tripRepositories.set_flight_details(trip_id, user_id, flight_details)
+    if not trip:
+        raise TripNotFoundError(f"trip '{trip_id}' not found for this user")
+    return trip
+
+
+async def add_location_visits_to_trip(
+    trip_id: str,
+    user_id: str,
+    visits: list[LocationVisit],
+) -> Trip:
+    trip = await tripRepositories.add_location_visits(trip_id, user_id, visits)
+    if not trip:
+        raise TripNotFoundError(f"trip '{trip_id}' not found for this user")
+    return trip
+
+
 async def delete_trip(trip_id: str, user_id: str) -> TripDeleteResponse:
     deleted = await tripRepositories.delete_trip(trip_id, user_id)
     if not deleted:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="trip not found",
-        )
+        raise TripNotFoundError("trip not found")
     return TripDeleteResponse(trip_id=trip_id)

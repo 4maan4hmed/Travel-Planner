@@ -1,6 +1,5 @@
 from langchain.agents import create_agent
 from langchain_groq import ChatGroq
-from dotenv import load_dotenv
 from app.tools.current_location import get_current_city
 from app.tools.flight_check import check_flight
 import asyncio
@@ -12,8 +11,6 @@ from app.tools.manage_trip import (
     add_location_visits_to_trip,
     create_trip,
 )
-
-load_dotenv()
 
 SYSTEM_PROMPT = """You are a travel planning assistant.
 Workflow:
@@ -66,6 +63,9 @@ async def run_travel_agent(
 
 
 if __name__ == "__main__":
+    from dotenv import load_dotenv
+
+    load_dotenv()
     out = asyncio.run(
         run_travel_agent(
             [{"role": "user", "content": "Tell me about the flight to Chennai on 07/15/2026"}]

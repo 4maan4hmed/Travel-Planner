@@ -4,8 +4,9 @@ from datetime import datetime
 from langchain.tools import ToolRuntime
 from langchain_core.tools import tool
 
-from app.models.model import FlightDetails, LocationVisit, Trip
-from app.repositories import tripRepositories
+from app.models.model import FlightDetails, LocationVisit, TripCreateRequest
+from app.services import tripService
+from app.services.tripService import TripError
 
 
 @dataclass
@@ -43,22 +44,20 @@ async def create_trip(
         start_date: Trip start date in YYYY-MM-DD format.
         end_date: Trip end date in YYYY-MM-DD format.
     """
-    user_id = runtime.context.user_id
-    start = _parse_date(start_date)
-    end = _parse_date(end_date)
-    if end < start:
-        return "Error: end_date must be on or after start_date."
+    try:
+        trip = await tripService.create_trip(
+            TripCreateRequest(
+                name=name,
+                from_location=from_location,
+                to_location=to_location,
+                start_date=_parse_date(start_date),
+                end_date=_parse_date(end_date),
+            ),
+            runtime.context.user_id,
+        )
+    except TripError as exc:
+        return f"Error: {exc.message}"
 
-    trip = Trip(
-        user_id=user_id,
-        time_created=datetime.utcnow(),
-        name=name,
-        from_location=from_location,
-        to_location=to_location,
-        start_date=start,
-        end_date=end,
-    )
-    trip = await tripRepositories.insert_trip(trip)
     return (
         f"Trip created successfully. trip_id={trip.trip_id}. "
         f"Use this trip_id when adding flight details or location visits."
@@ -77,10 +76,15 @@ async def add_flight_to_trip(
         trip_id: The trip_id returned by create_trip.
         flight_details: Selected flight details (airline, number, route, date, price).
     """
-    user_id = runtime.context.user_id
-    trip = await tripRepositories.set_flight_details(trip_id, user_id, flight_details)
-    if not trip:
-        return f"Error: trip '{trip_id}' not found for this user."
+    try:
+        await tripService.add_flight_to_trip(
+            trip_id,
+            runtime.context.user_id,
+            flight_details,
+        )
+    except TripError as exc:
+        return f"Error: {exc.message}"
+
     return (
         f"Flight details saved on trip {trip_id}: "
         f"{flight_details.airline} {flight_details.flight_number} "
@@ -100,9 +104,14 @@ async def add_location_visits_to_trip(
         trip_id: The trip_id returned by create_trip.
         visits: List of visits with location, date (YYYY-MM-DD), and notes.
     """
-    user_id = runtime.context.user_id
-    trip = await tripRepositories.add_location_visits(trip_id, user_id, visits)
-    if not trip:
-        return f"Error: trip '{trip_id}' not found for this user."
+    try:
+        await tripService.add_location_visits_to_trip(
+            trip_id,
+            runtime.context.user_id,
+            visits,
+        )
+    except TripError as exc:
+        return f"Error: {exc.message}"
+
     names = ", ".join(v.location for v in visits)
     return f"Added {len(visits)} location visit(s) to trip {trip_id}: {names}."

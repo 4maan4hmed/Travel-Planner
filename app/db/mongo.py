@@ -1,12 +1,10 @@
 import os
-from dotenv import load_dotenv
 from pymongo import MongoClient
 from pymongo.collection import Collection
 from pymongo.database import Database
 
 _client: MongoClient | None = None
 
-load_dotenv()
 
 def get_client() -> MongoClient:
     global _client
