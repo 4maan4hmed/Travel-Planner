@@ -22,7 +22,7 @@ async def create_trip(
     request: TripCreateRequest,
     user_id: str = Depends(get_current_user_id),
 ) -> Trip:
-    return tripService.create_trip(request, user_id)
+    return await tripService.create_trip(request, user_id)
 
 
 @router.get(
@@ -33,7 +33,7 @@ async def create_trip(
 async def list_trips(
     user_id: str = Depends(get_current_user_id),
 ) -> TripListResponse:
-    return tripService.list_trips(user_id)
+    return await tripService.list_trips(user_id)
 
 
 @router.delete(
@@ -45,4 +45,4 @@ async def delete_trip(
     trip_id: str,
     user_id: str = Depends(get_current_user_id),
 ) -> TripDeleteResponse:
-    return tripService.delete_trip(trip_id, user_id)
+    return await tripService.delete_trip(trip_id, user_id)

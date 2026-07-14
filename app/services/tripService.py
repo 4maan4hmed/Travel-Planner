@@ -27,16 +27,16 @@ async def create_trip(request: TripCreateRequest, user_id: str) -> Trip:
         start_date=request.start_date,
         end_date=request.end_date,
     )
-    return tripRepositories.insert_trip(trip)
+    return await tripRepositories.insert_trip(trip)
 
 
 async def list_trips(user_id: str) -> TripListResponse:
-    trips = tripRepositories.find_trips_by_user(user_id)
+    trips = await tripRepositories.find_trips_by_user(user_id)
     return TripListResponse(trips=trips)
 
 
 async def delete_trip(trip_id: str, user_id: str) -> TripDeleteResponse:
-    deleted = tripRepositories.delete_trip(trip_id, user_id)
+    deleted = await tripRepositories.delete_trip(trip_id, user_id)
     if not deleted:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

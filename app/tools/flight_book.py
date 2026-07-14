@@ -1,15 +1,13 @@
 from langchain_core.tools import tool
 from app.models.model import FlightDetails
 
-from langchain_core.tools import tool
-from app.models.model import FlightDetails
 
 @tool
 async def book_flight(flight_details: FlightDetails):
     """Fake-book a flight. Call this only after the user confirms which flight to book.
 
     Args:
-        flight_details: The selected flight (airline, flight number, route, dates, price, etc.).
+        flight_details: The selected flight (airline, flight number, route, date, price).
     """
     print(
         f"Flight booked: {flight_details.airline} {flight_details.flight_number} "
