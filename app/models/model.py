@@ -4,6 +4,23 @@ from enum import Enum
 from pydantic import BaseModel, Field
 
 
+class LocationVisit(BaseModel):
+    location: str = Field(..., description="The location of the visit")
+    date: datetime = Field(..., description="The date of the visit")
+    notes: str = Field(..., description="The notes of the visit")
+
+class FlightDetails(BaseModel):
+    flight_number: str = Field(..., description="The flight number")
+    departure_date: datetime = Field(..., description="The departure date")
+    arrival_date: datetime = Field(..., description="The arrival date")
+    departure_location: str = Field(..., description="The departure location")
+    arrival_location: str = Field(..., description="The arrival location")
+    price: float = Field(..., description="The price of the flight")
+    airline: str = Field(..., description="The airline of the flight")
+    flight_duration: int = Field(..., description="The duration of the flight")
+    stops: int = Field(..., description="The number of stops of the flight")
+    booking_token: str = Field(..., description="The booking token of the flight")
+
 class Trip(BaseModel):
     trip_id: str | None = Field(default=None, description="MongoDB _id as string")
     user_id: str = Field(..., description="The ID of the user who created the trip")
@@ -14,6 +31,9 @@ class Trip(BaseModel):
     start_date: datetime = Field(..., description="The start date of the trip")
     end_date: datetime = Field(..., description="The end date of the trip")
 
+class TripCreated(Trip):
+    location_visits: list[LocationVisit] = Field(..., description="The list of location to be visited in the trip")
+    flight_details: FlightDetails = Field(default=None, description="The flight details for the trip")
 
 class TripCreateRequest(BaseModel):
     name: str

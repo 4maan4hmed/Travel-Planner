@@ -62,13 +62,23 @@ async def send_message(
     user_id: str,
 ) -> SendMessageResponse:
     now = datetime.utcnow()
+    chat = await chatRepositories.find_chat_by_id(session_id, user_id)
+    if not chat:
+        raise HTTPException(status_code=404, detail="chat not found")
     user_message = Message(
         id=str(uuid4()),
         role=MessageRole.USER,
         content=request.content,
         created_at=now,
     )
-    resp = run_travel_agent(request.content)
+
+    history = [
+        {"role": m.role.value, "content": m.content}
+        for m in chat.messages
+    ]
+    history.append({"role": "user", "content": request.content})
+
+    resp = await run_travel_agent(history)
     assistant_message = Message(
         id=str(uuid4()),
         role=MessageRole.ASSISTANT,
