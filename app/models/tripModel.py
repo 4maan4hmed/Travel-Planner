@@ -16,7 +16,7 @@ class FlightDetails(BaseModel):
     price: float = Field(..., description="Ticket price in INR")
 
 class Trip(BaseModel):
-    trip_id: str | None = Field(default=None, description="MongoDB _id as string")
+    trip_id: str | None = Field(default=None, description="Application-generated UUID for the trip")
     user_id: str = Field(..., description="The ID of the user who created the trip")
     time_created: datetime = Field(..., description="The time the trip was created")
     name: str = Field(..., description="The name of the trip")

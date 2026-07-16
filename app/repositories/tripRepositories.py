@@ -1,4 +1,5 @@
-from bson import ObjectId
+from uuid import uuid4
+
 from pymongo import ReturnDocument
 
 from app.db.mongo import get_trips_collection
@@ -6,16 +7,15 @@ from app.models.tripModel import FlightDetails, LocationVisit, Trip
 
 
 def _doc_to_trip(doc: dict) -> Trip:
-    trip_id = str(doc.pop("_id"))
-    return Trip(**doc, trip_id=trip_id)
+    doc.pop("_id", None)
+    return Trip(**doc)
 
 
 async def insert_trip(trip: Trip) -> Trip:
     collection = get_trips_collection()
-    result = collection.insert_one(
-        trip.model_dump(exclude={"trip_id"}, mode="json")
-    )
-    trip.trip_id = str(result.inserted_id)
+    if not trip.trip_id:
+        trip.trip_id = str(uuid4())
+    collection.insert_one(trip.model_dump(mode="json"))
     return trip
 
 
@@ -29,7 +29,7 @@ async def find_trips_by_user(user_id: str) -> list[Trip]:
 
 async def find_trip_by_id(trip_id: str, user_id: str) -> Trip | None:
     collection = get_trips_collection()
-    doc = collection.find_one({"_id": ObjectId(trip_id), "user_id": user_id})
+    doc = collection.find_one({"trip_id": trip_id, "user_id": user_id})
     if not doc:
         return None
     return _doc_to_trip(doc)
@@ -42,7 +42,7 @@ async def set_flight_details(
 ) -> Trip | None:
     collection = get_trips_collection()
     result = collection.find_one_and_update(
-        {"_id": ObjectId(trip_id), "user_id": user_id},
+        {"trip_id": trip_id, "user_id": user_id},
         {"$set": {"flight_details": flight_details.model_dump(mode="json")}},
         return_document=ReturnDocument.AFTER,
     )
@@ -58,7 +58,7 @@ async def add_location_visits(
 ) -> Trip | None:
     collection = get_trips_collection()
     result = collection.find_one_and_update(
-        {"_id": ObjectId(trip_id), "user_id": user_id},
+        {"trip_id": trip_id, "user_id": user_id},
         {
             "$push": {
                 "location_visits": {
@@ -75,5 +75,5 @@ async def add_location_visits(
 
 async def delete_trip(trip_id: str, user_id: str) -> bool:
     collection = get_trips_collection()
-    result = collection.delete_one({"_id": ObjectId(trip_id), "user_id": user_id})
+    result = collection.delete_one({"trip_id": trip_id, "user_id": user_id})
     return result.deleted_count > 0

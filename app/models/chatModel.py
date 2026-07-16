@@ -23,10 +23,6 @@ class Chat(BaseModel):
     messages: list[Message] = []
 
 
-class ChatCreateRequest(BaseModel):
-    pass
-
-
 class ChatCreateResponse(BaseModel):
     session_id: str
     created_at: datetime

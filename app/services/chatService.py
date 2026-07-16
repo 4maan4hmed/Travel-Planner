@@ -6,7 +6,6 @@ from fastapi import HTTPException, status
 from app.agent.travelAgent import run_travel_agent
 from app.models.chatModel import (
     Chat,
-    ChatCreateRequest,
     ChatCreateResponse,
     ChatDeleteResponse,
     ChatListResponse,
@@ -19,7 +18,7 @@ from app.repositories import chatRepositories
 
 
 
-async def create_chat(request: ChatCreateRequest, user_id: str) -> ChatCreateResponse:
+async def create_chat(user_id: str) -> ChatCreateResponse:
     now = datetime.utcnow()
     chat = Chat(
         user_id=user_id,
@@ -67,7 +66,7 @@ async def send_message(
             raise HTTPException(status_code=404, detail="chat not found")
         session_id = request.session_id
     else:
-        created = await create_chat(Chat(user_id=user_id), user_id)
+        created = await create_chat(user_id)
         session_id = created.session_id
     user_message = Message(
         id=str(uuid4()),

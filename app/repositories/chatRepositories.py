@@ -1,6 +1,6 @@
 from datetime import datetime
+from uuid import uuid4
 
-from bson import ObjectId
 from pymongo import ReturnDocument
 
 from app.db.mongo import get_chat_collection
@@ -8,16 +8,15 @@ from app.models.chatModel import Chat, Message
 
 
 def _doc_to_chat(doc: dict) -> Chat:
-    session_id = str(doc.pop("_id"))
-    return Chat(**doc, session_id=session_id)
+    doc.pop("_id", None)
+    return Chat(**doc)
 
 
 async def insert_chat(chat: Chat) -> Chat:
     collection = get_chat_collection()
-    result = collection.insert_one(
-        chat.model_dump(exclude={"session_id"}, mode="json")
-    )
-    chat.session_id = str(result.inserted_id)
+    if not chat.session_id:
+        chat.session_id = str(uuid4())
+    collection.insert_one(chat.model_dump(mode="json"))
     return chat
 
 
@@ -31,7 +30,7 @@ async def find_chats_by_user(user_id: str) -> list[Chat]:
 
 async def find_chat_by_id(session_id: str, user_id: str) -> Chat | None:
     collection = get_chat_collection()
-    doc = collection.find_one({"_id": ObjectId(session_id), "user_id": user_id})
+    doc = collection.find_one({"session_id": session_id, "user_id": user_id})
     if not doc:
         return None
     return _doc_to_chat(doc)
@@ -39,7 +38,7 @@ async def find_chat_by_id(session_id: str, user_id: str) -> Chat | None:
 
 async def delete_chat(session_id: str, user_id: str) -> bool:
     collection = get_chat_collection()
-    result = collection.delete_one({"_id": ObjectId(session_id), "user_id": user_id})
+    result = collection.delete_one({"session_id": session_id, "user_id": user_id})
     return result.deleted_count > 0
 
 
@@ -51,7 +50,7 @@ async def append_messages(
 ) -> Chat | None:
     collection = get_chat_collection()
     result = collection.find_one_and_update(
-        {"_id": ObjectId(session_id), "user_id": user_id},
+        {"session_id": session_id, "user_id": user_id},
         {
             "$push": {
                 "messages": {"$each": [m.model_dump(mode="json") for m in messages]}
