@@ -1,5 +1,6 @@
-from pydantic import BaseModel, Enum, datetime
-
+from pydantic import BaseModel
+from enum import Enum
+from datetime import datetime
 
 class MessageRole(str, Enum):
     USER = "user"

@@ -14,7 +14,9 @@ def _doc_to_chat(doc: dict) -> Chat:
 
 async def insert_chat(chat: Chat) -> Chat:
     collection = get_chat_collection()
-    result = collection.insert_one(chat.model_dump(exclude={"session_id"}))
+    result = collection.insert_one(
+        chat.model_dump(exclude={"session_id"}, mode="json")
+    )
     chat.session_id = str(result.inserted_id)
     return chat
 
@@ -51,7 +53,9 @@ async def append_messages(
     result = collection.find_one_and_update(
         {"_id": ObjectId(session_id), "user_id": user_id},
         {
-            "$push": {"messages": {"$each": [m.model_dump() for m in messages]}},
+            "$push": {
+                "messages": {"$each": [m.model_dump(mode="json") for m in messages]}
+            },
             "$set": {"updated_at": updated_at},
         },
         return_document=ReturnDocument.AFTER,

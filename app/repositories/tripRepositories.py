@@ -12,7 +12,9 @@ def _doc_to_trip(doc: dict) -> Trip:
 
 async def insert_trip(trip: Trip) -> Trip:
     collection = get_trips_collection()
-    result = collection.insert_one(trip.model_dump(exclude={"trip_id"}))
+    result = collection.insert_one(
+        trip.model_dump(exclude={"trip_id"}, mode="json")
+    )
     trip.trip_id = str(result.inserted_id)
     return trip
 
@@ -41,7 +43,7 @@ async def set_flight_details(
     collection = get_trips_collection()
     result = collection.find_one_and_update(
         {"_id": ObjectId(trip_id), "user_id": user_id},
-        {"$set": {"flight_details": flight_details.model_dump()}},
+        {"$set": {"flight_details": flight_details.model_dump(mode="json")}},
         return_document=ReturnDocument.AFTER,
     )
     if not result:
@@ -60,7 +62,7 @@ async def add_location_visits(
         {
             "$push": {
                 "location_visits": {
-                    "$each": [v.model_dump() for v in visits],
+                    "$each": [v.model_dump(mode="json") for v in visits],
                 }
             }
         },

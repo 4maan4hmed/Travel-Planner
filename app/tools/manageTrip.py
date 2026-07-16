@@ -4,7 +4,7 @@ from datetime import datetime
 from langchain.tools import ToolRuntime
 from langchain_core.tools import tool
 
-from app.models.model import FlightDetails, LocationVisit, TripCreateRequest
+from app.models.tripModel import FlightDetails, LocationVisit, TripCreateRequest
 from app.services import tripService
 from app.services.tripService import TripError
 

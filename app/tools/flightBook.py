@@ -1,5 +1,5 @@
 from langchain_core.tools import tool
-from app.models.model import FlightDetails
+from app.models.tripModel import FlightDetails
 
 
 @tool
