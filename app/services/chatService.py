@@ -4,7 +4,7 @@ from uuid import uuid4
 from fastapi import HTTPException, status
 
 from app.agent.travelAgent import run_travel_agent
-from app.models.model import (
+from app.models.chatModel import (
     Chat,
     ChatCreateRequest,
     ChatCreateResponse,

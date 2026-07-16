@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from app.models.model import (
+from app.models.tripModel import (
     FlightDetails,
     LocationVisit,
     Trip,

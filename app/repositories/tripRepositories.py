@@ -2,7 +2,7 @@ from bson import ObjectId
 from pymongo import ReturnDocument
 
 from app.db.mongo import get_trips_collection
-from app.models.model import FlightDetails, LocationVisit, Trip
+from app.models.tripModel import FlightDetails, LocationVisit, Trip
 
 
 def _doc_to_trip(doc: dict) -> Trip:

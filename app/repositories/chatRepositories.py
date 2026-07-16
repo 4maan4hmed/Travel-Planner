@@ -4,7 +4,7 @@ from bson import ObjectId
 from pymongo import ReturnDocument
 
 from app.db.mongo import get_chat_collection
-from app.models.model import Chat, Message
+from app.models.chatModel import Chat, Message
 
 
 def _doc_to_chat(doc: dict) -> Chat:

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, status
 
 from app.deps import get_current_user_id
-from app.models.model import (
+from app.models.chatModel import (
     Chat,
     ChatCreateRequest,
     ChatCreateResponse,
