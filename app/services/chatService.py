@@ -1,4 +1,5 @@
 from datetime import datetime
+from time import timezone
 from uuid import uuid4
 
 from fastapi import HTTPException, status
@@ -18,11 +19,11 @@ from app.models.chatModel import (
 from app.repositories import chatRepositories
 
 
+
 async def create_chat(request: ChatCreateRequest, user_id: str) -> ChatCreateResponse:
     now = datetime.utcnow()
     chat = Chat(
         user_id=user_id,
-        trip_id=request.trip_id,
         created_at=now,
         updated_at=now,
         messages=[],
@@ -56,15 +57,18 @@ async def delete_chat(session_id: str, user_id: str) -> ChatDeleteResponse:
     return ChatDeleteResponse(session_id=session_id)
 
 
-async def send_message(
-    session_id: str,
-    request: SendMessageRequest,
-    user_id: str,
-) -> SendMessageResponse:
-    now = datetime.utcnow()
-    chat = await chatRepositories.find_chat_by_id(session_id, user_id)
-    if not chat:
-        raise HTTPException(status_code=404, detail="chat not found")
+async def send_message(request: SendMessageRequest, user_id: str) -> SendMessageResponse:
+    now = datetime.now(timezone.utc)
+
+    if request.session_id:
+        chat = await chatRepositories.find_chat_by_id(request.session_id, user_id)
+        if not chat:
+            raise HTTPException(status_code=404, detail="chat not found")
+        session_id = request.session_id
+    else:
+        created = await create_chat(Chat(user_id=user_id), user_id)
+        session_id = created.session_id
+
     user_message = Message(
         id=str(uuid4()),
         role=MessageRole.USER,
@@ -72,29 +76,32 @@ async def send_message(
         created_at=now,
     )
 
-    resp = await run_travel_agent(
-        request.content,
-        session_id=session_id,
-        user_id=user_id,
-    )
-    assistant_message = Message(
-        id=str(uuid4()),
-        role=MessageRole.ASSISTANT,
-        content=resp,
-        created_at=now,
-    )
-    #assistant_message = agent_invoke()
+    try:
+        resp = await asyncio.wait_for(
+            run_travel_agent(request.content, session_id=session_id, user_id=user_id),
+            timeout=AGENT_TIMEOUT_SECONDS,
+        )
+        assistant_message = Message(
+            id=str(uuid4()),
+            role=MessageRole.ASSISTANT,
+            content=resp,
+            created_at=datetime.now(timezone.utc),
+        )
+    except (asyncio.TimeoutError, Exception) as e:
+        logger.exception("agent call failed for session %s", session_id)
+        assistant_message = Message(
+            id=str(uuid4()),
+            role=MessageRole.ASSISTANT,
+            content="Sorry, I couldn't process that right now. Please try again.",
+            created_at=datetime.now(timezone.utc),
+        )
+
     chat = await chatRepositories.append_messages(
-        session_id,
-        user_id,
-        [user_message, assistant_message],
-        now,
+        session_id, user_id, [user_message, assistant_message], now,
     )
     if not chat:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="chat not found",
-        )
+        raise HTTPException(status_code=404, detail="chat not found")
+
     return SendMessageResponse(
         session_id=session_id,
         user_message=user_message,

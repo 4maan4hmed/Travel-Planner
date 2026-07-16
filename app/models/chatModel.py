@@ -18,14 +18,13 @@ class Message(BaseModel):
 class Chat(BaseModel):
     session_id: str | None = None
     user_id: str
-    trip_id: str | None = None
     created_at: datetime
     updated_at: datetime
     messages: list[Message] = []
 
 
 class ChatCreateRequest(BaseModel):
-    trip_id: str | None = None
+    pass
 
 
 class ChatCreateResponse(BaseModel):
@@ -43,6 +42,7 @@ class ChatDeleteResponse(BaseModel):
 
 
 class SendMessageRequest(BaseModel):
+    session_id: str | None = None
     content: str
 
 

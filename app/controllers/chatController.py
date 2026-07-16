@@ -1,10 +1,8 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends
 
 from app.deps import get_current_user_id
 from app.models.chatModel import (
     Chat,
-    ChatCreateRequest,
-    ChatCreateResponse,
     ChatDeleteResponse,
     ChatListResponse,
     SendMessageRequest,
@@ -13,19 +11,6 @@ from app.models.chatModel import (
 from app.services import chatService
 
 router = APIRouter(prefix="/chat", tags=["chat"])
-
-
-@router.post(
-    "/create",
-    summary="Create a new chat session",
-    response_model=ChatCreateResponse,
-    status_code=status.HTTP_201_CREATED,
-)
-async def create_chat(
-    request: ChatCreateRequest,
-    user_id: str = Depends(get_current_user_id),
-) -> ChatCreateResponse:
-    return await chatService.create_chat(request, user_id)
 
 
 @router.get(
@@ -52,16 +37,15 @@ async def get_chat(
 
 
 @router.post(
-    "/{session_id}/message",
-    summary="Send a message in a chat session",
+    "/message",
+    summary="Send a message; creates a new chat session when session_id is omitted",
     response_model=SendMessageResponse,
 )
 async def send_message(
-    session_id: str,
     request: SendMessageRequest,
     user_id: str = Depends(get_current_user_id),
 ) -> SendMessageResponse:
-    return await chatService.send_message(session_id, request, user_id)
+    return await chatService.send_message(request, user_id)
 
 
 @router.delete(

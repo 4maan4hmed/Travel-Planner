@@ -54,14 +54,10 @@ with st.sidebar:
     st.divider()
     st.header("Chat session")
 
-    if st.button("Create new chat", use_container_width=True):
-        ok, data = api("POST", "/chat/create", json={})
-        if ok:
-            st.session_state.session_id = data["session_id"]
-            st.session_state.messages = []
-            st.success(f"Created {data['session_id']}")
-        else:
-            st.error(data)
+    if st.button("New chat", use_container_width=True):
+        st.session_state.session_id = None
+        st.session_state.messages = []
+        st.success("Started a new chat. Send a message to create the session.")
 
     ok, data = api("GET", "/chat/list")
     if ok:
@@ -101,16 +97,13 @@ st.title("Travel Planner")
 if st.session_state.session_id:
     st.caption(f"Session: {st.session_state.session_id}")
 else:
-    st.info("Create or load a chat from the sidebar to start.")
+    st.info("Send a message to start a new chat, or load one from the sidebar.")
 
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
 
-prompt = st.chat_input(
-    "Type a message...",
-    disabled=st.session_state.session_id is None,
-)
+prompt = st.chat_input("Type a message...")
 
 if prompt:
     st.session_state.messages.append({"role": "user", "content": prompt})
@@ -121,10 +114,14 @@ if prompt:
         with st.spinner("Thinking..."):
             ok, data = api(
                 "POST",
-                f"/chat/{st.session_state.session_id}/message",
-                json={"content": prompt},
+                "/chat/message",
+                json={
+                    "session_id": st.session_state.session_id,
+                    "content": prompt,
+                },
             )
         if ok:
+            st.session_state.session_id = data["session_id"]
             reply = data["assistant_message"]["content"]
             st.markdown(reply)
             st.session_state.messages.append({"role": "assistant", "content": reply})
