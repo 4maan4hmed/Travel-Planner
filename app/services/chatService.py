@@ -1,5 +1,4 @@
 from datetime import datetime
-from time import timezone
 from uuid import uuid4
 
 from fastapi import HTTPException, status
