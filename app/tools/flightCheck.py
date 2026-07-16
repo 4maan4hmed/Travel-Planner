@@ -112,5 +112,5 @@ if __name__ == "__main__":
             }
         )
     )
-    with open("flight_check.txt", "w", encoding="utf-8") as file:
+    with open("flightCheck.txt", "w", encoding="utf-8") as file:
         file.write(out)
