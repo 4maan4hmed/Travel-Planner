@@ -72,13 +72,11 @@ async def send_message(
         created_at=now,
     )
 
-    history = [
-        {"role": m.role.value, "content": m.content}
-        for m in chat.messages
-    ]
-    history.append({"role": "user", "content": request.content})
-
-    resp = await run_travel_agent(history, user_id=user_id)
+    resp = await run_travel_agent(
+        request.content,
+        session_id=session_id,
+        user_id=user_id,
+    )
     assistant_message = Message(
         id=str(uuid4()),
         role=MessageRole.ASSISTANT,

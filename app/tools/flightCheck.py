@@ -3,6 +3,7 @@ import os
 
 import serpapi
 from langchain_core.tools import tool
+from app.config.settings import get_settings
 
 _client: serpapi.Client | None = None
 
@@ -10,7 +11,7 @@ _client: serpapi.Client | None = None
 def _get_client() -> serpapi.Client:
     global _client
     if _client is None:
-        _client = serpapi.Client(api_key=os.getenv("SERPAPI_KEY"))
+        _client = serpapi.Client(api_key=get_settings().serpapi_key)
     return _client
 
 

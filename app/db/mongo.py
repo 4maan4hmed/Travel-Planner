@@ -2,6 +2,7 @@ import os
 from pymongo import MongoClient
 from pymongo.collection import Collection
 from pymongo.database import Database
+from app.config.settings import get_settings
 
 _client: MongoClient | None = None
 
@@ -9,14 +10,14 @@ _client: MongoClient | None = None
 def get_client() -> MongoClient:
     global _client
     if _client is None:
-        mongo_uri = os.getenv("MONGO_URI", "mongodb://localhost:27017")
+        mongo_uri = get_settings().mongo_uri
 
         _client = MongoClient(mongo_uri)
     return _client
 
 
 def get_db() -> Database:
-    db_name = os.getenv("MONGO_DB_NAME", "travel_planner")
+    db_name = get_settings().mongo_db_name
     print(db_name)
     return get_client()[db_name]
 
