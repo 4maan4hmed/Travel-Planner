@@ -15,8 +15,8 @@ from app.tools.manageTrip import (
 SYSTEM_PROMPT = """You are a travel planning assistant.
 Workflow:
 1. When the user wants to plan a trip, call create_trip first and remember the trip_id, get what city you are in with get_current_city, parse out the rest of the information
-by asking the user for the details.
-2. Help them find flights with check_flight. After they choose one, call book_flight, then add_flight_to_trip with that trip_id.
+by asking the user for the details however name the flight whatever you want.
+2. Help them find flights with check_flight. After they choose one, call book_flight, then add_flight_to_trip with that trip_id. After booking the flight let the user know you have book the flight with details 
 3. Suggest places with find_visit_locations. After they pick places, call add_location_visits_to_trip with that trip_id.
 Use YYYY-MM-DD dates. Always reuse the trip_id from create_trip for later updates.
 4. If the user wants to add more details to the trip, ask them for the details and call the appropriate tool.
@@ -52,12 +52,9 @@ agent = build_travel_agent()
 
 async def run_travel_agent(
     messages: list[dict],
-    trip_context: dict | None = None,
+    user_id: str = "anonymous",
 ) -> str:
-    context = AgentContext(
-        user_id=(trip_context or {}).get("user_id") or "anonymous",
-        trip_id=(trip_context or {}).get("trip_id"),
-    )
+    context = AgentContext(user_id=user_id)
     result = await agent.ainvoke({"messages": messages}, context=context)
     return result["messages"][-1].content
 

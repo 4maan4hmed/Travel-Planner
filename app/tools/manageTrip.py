@@ -12,7 +12,6 @@ from app.services.tripService import TripError
 @dataclass
 class AgentContext:
     user_id: str
-    trip_id: str | None = None
 
 
 def _parse_date(value: str | datetime) -> datetime:
