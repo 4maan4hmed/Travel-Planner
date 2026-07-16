@@ -23,11 +23,6 @@ class Chat(BaseModel):
     messages: list[Message] = []
 
 
-class ChatCreateResponse(BaseModel):
-    session_id: str
-    created_at: datetime
-
-
 class ChatListResponse(BaseModel):
     chats: list[Chat]
 
