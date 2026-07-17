@@ -1,8 +1,12 @@
 import asyncio
-import os
+import json
 
 import serpapi
+from langchain.tools import ToolRuntime
+from langchain_core.messages import ToolMessage
 from langchain_core.tools import tool
+from langgraph.types import Command
+
 from app.config.settings import get_settings
 
 _client: serpapi.Client | None = None
@@ -21,7 +25,8 @@ async def check_flight(
     arrival_city: str,
     outbound_date: str,
     return_date: str,
-):
+    runtime: ToolRuntime,
+) -> Command:
     """Check flight availability between two cities on given dates.
 
     Args:
@@ -50,7 +55,17 @@ async def check_flight(
         }
     )
     best_flights = results.get("best_flights", [])
-    return str(summarize_flights(best_flights))
+    summary = summarize_flights(best_flights)
+    content = json.dumps(summary, indent=2)
+    return Command(
+        update={
+            "flight_options": summary,
+            "phase": "searching_flights",
+            "messages": [
+                ToolMessage(content=content, tool_call_id=runtime.tool_call_id)
+            ],
+        }
+    )
 
 
 def summarize_flights(flight_list):

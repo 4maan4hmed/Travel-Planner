@@ -5,6 +5,8 @@ from app.models.chatModel import (
     Chat,
     ChatDeleteResponse,
     ChatListResponse,
+    ResumeRequest,
+    ResumeResponse,
     SendMessageRequest,
     SendMessageResponse,
 )
@@ -46,6 +48,18 @@ async def send_message(
     user_id: str = Depends(get_current_user_id),
 ) -> SendMessageResponse:
     return await chatService.send_message(request, user_id)
+
+
+@router.post(
+    "/resume",
+    summary="Resume an interrupted graph turn (e.g. approve or reject a flight)",
+    response_model=ResumeResponse,
+)
+async def resume_message(
+    request: ResumeRequest,
+    user_id: str = Depends(get_current_user_id),
+) -> ResumeResponse:
+    return await chatService.resume_message(request, user_id)
 
 
 @router.delete(
