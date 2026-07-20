@@ -6,10 +6,12 @@ from langchain_core.messages import HumanMessage
 from langgraph.types import Command
 
 from app.agent.graph import build_travel_graph
+from app.config.langsmith import configure_langsmith
 from app.models.tripModel import FlightDetails
 
 SYSTEM_PROMPT = ""  # kept for backwards compatibility; prompt lives in nodes.py
 
+configure_langsmith()
 graph = build_travel_graph()
 
 
@@ -20,8 +22,22 @@ class AgentRunResult:
     interrupt: dict[str, Any] | None = None
 
 
-def _graph_config(session_id: str) -> dict:
-    return {"configurable": {"thread_id": session_id}}
+def _graph_config(
+    session_id: str,
+    *,
+    user_id: str = "anonymous",
+    run_name: str = "travel_agent",
+) -> dict:
+    """LangGraph config plus LangSmith run metadata for flow visibility."""
+    return {
+        "configurable": {"thread_id": session_id},
+        "run_name": run_name,
+        "tags": ["travel-planner", run_name],
+        "metadata": {
+            "session_id": session_id,
+            "user_id": user_id,
+        },
+    }
 
 
 def _extract_interrupt(result: dict) -> dict | None:
@@ -71,7 +87,11 @@ async def run_travel_agent(
     if await is_session_interrupted(session_id):
         raise ValueError("Session is awaiting flight approval. Use resume instead.")
 
-    config = _graph_config(session_id)
+    config = _graph_config(
+        session_id,
+        user_id=user_id,
+        run_name="travel_agent",
+    )
     result = await graph.ainvoke(
         {
             "messages": [HumanMessage(content=message)],
@@ -98,7 +118,11 @@ async def resume_travel_agent(
     if not await is_session_interrupted(session_id):
         raise ValueError("Session is not awaiting approval.")
 
-    config = _graph_config(session_id)
+    config = _graph_config(
+        session_id,
+        user_id=user_id,
+        run_name="travel_agent_resume",
+    )
     result = await graph.ainvoke(
         Command(resume={"approved": approved}),
         config=config,

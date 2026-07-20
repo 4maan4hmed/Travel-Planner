@@ -1,8 +1,11 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.config.langsmith import configure_langsmith
 from app.controllers.tripController import router as trip_router
 from app.controllers.chatController import router as chat_router
+
+configure_langsmith()
 
 app = FastAPI(title="Travel Planner")
 

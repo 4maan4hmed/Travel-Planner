@@ -50,4 +50,7 @@ def build_travel_graph():
         db_name=get_settings().mongo_db_name,
     )
 
-    return builder.compile(checkpointer=checkpointer)
+    return builder.compile(
+        checkpointer=checkpointer,
+        name="travel_agent",
+    )
