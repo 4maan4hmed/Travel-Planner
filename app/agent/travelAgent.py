@@ -52,20 +52,6 @@ def _extract_interrupt(result: dict) -> dict | None:
     return first
 
 
-async def _resolve_interrupt(session_id: str, result: dict) -> dict | None:
-    payload = _extract_interrupt(result)
-    if payload:
-        return payload
-
-    snapshot = await graph.aget_state(_graph_config(session_id))
-    if getattr(snapshot, "interrupts", None):
-        first = snapshot.interrupts[0]
-        if hasattr(first, "value"):
-            return first.value
-        return first
-    return None
-
-
 def _last_ai_content(result: dict) -> str | None:
     messages = result.get("messages", [])
     for message in reversed(messages):
@@ -100,7 +86,7 @@ async def run_travel_agent(
         config=config,
     )
 
-    interrupt_payload = await _resolve_interrupt(session_id, result)
+    interrupt_payload = _extract_interrupt(result)
     if interrupt_payload:
         return AgentRunResult(status="interrupted", interrupt=interrupt_payload)
 
@@ -128,7 +114,7 @@ async def resume_travel_agent(
         config=config,
     )
 
-    interrupt_payload = await _resolve_interrupt(session_id, result)
+    interrupt_payload = _extract_interrupt(result)
     if interrupt_payload:
         return AgentRunResult(status="interrupted", interrupt=interrupt_payload)
 

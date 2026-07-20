@@ -12,16 +12,7 @@ def route_after_agent(state: TravelState) -> Literal["tools", "__end__"]:
     return "__end__"
 
 
-def route_after_tools(state: TravelState) -> Literal["agent", "flight_approval"]:
-    if (
-        state.get("phase") == "awaiting_flight_approval"
-        and state.get("pending_flight")
-    ):
-        return "flight_approval"
-    return "agent"
-
-
-def route_after_approval(state: TravelState) -> Literal["book_and_save", "agent"]:
-    if state.get("flight_approved"):
-        return "book_and_save"
+def route_after_tools(state: TravelState) -> Literal["agent", "confirm_booking"]:
+    if state.get("pending_flight"):
+        return "confirm_booking"
     return "agent"

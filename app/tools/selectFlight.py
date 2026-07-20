@@ -28,7 +28,6 @@ async def select_flight(
     return Command(
         update={
             "pending_flight": flight_details.model_dump(),
-            "phase": "awaiting_flight_approval",
             "messages": [
                 ToolMessage(content=content, tool_call_id=runtime.tool_call_id)
             ],

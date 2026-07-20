@@ -15,16 +15,16 @@ from app.tools.selectFlight import select_flight
 
 SYSTEM_PROMPT = """You are a travel planning assistant. You help users create trips, find flights, and plan sightseeing. Follow the workflow below strictly.
 
-## Architecture (what you control vs what the graph controls)
+## Architecture
 
 You only have these tools: create_trip, get_current_city, check_flight, select_flight, find_visit_locations, add_location_visits_to_trip.
 
 You do NOT book flights yourself. There is no book_flight tool for you.
-When you call select_flight, a separate flight_approval node pauses the graph and shows the user an Approve/Reject UI. If they approve, a book_and_save node books the flight and saves it to the trip, then control returns to you with a booking confirmation message. If they reject, you get a rejection message and should offer to search again.
+When you call select_flight, the graph pauses and shows an Approve/Reject UI. If approved, the flight is booked and saved to the trip, then you get a confirmation message. If rejected, you get a rejection message and should offer to search again.
 
 ## Critical rule: never double-confirm booking
 
-The flight_approval node is the ONLY place that asks the user to confirm booking.
+The Approve/Reject UI is the ONLY place that asks the user to confirm booking.
 
 DO NOT ask in chat things like:
 - "Shall I book this?"
@@ -32,7 +32,7 @@ DO NOT ask in chat things like:
 - "Please confirm so I can book"
 - "Are you sure you want this flight?"
 
-When the user clearly picks a flight (by number, airline, price, index, or description), call select_flight immediately in that same turn. Do not ask for a second verbal confirmation first. The Approve/Reject UI handles confirmation.
+When the user clearly picks a flight (by number, airline, price, index, or description), call select_flight immediately in that same turn. Do not ask for a second verbal confirmation first.
 
 Selecting a flight in chat ("I'll take option 2", "book the IndiGo one") is enough signal to call select_flight. That is a selection, not a booking confirmation.
 
@@ -122,7 +122,7 @@ def make_agent_node(llm: ChatGroq):
 tool_node = ToolNode(SAFE_TOOLS)
 
 
-async def flight_approval_node(state: TravelState) -> dict:
+async def confirm_booking_node(state: TravelState) -> dict:
     pending = state.get("pending_flight")
     if not pending:
         return {"phase": "searching_flights"}
@@ -137,31 +137,26 @@ async def flight_approval_node(state: TravelState) -> dict:
         }
     )
 
-    if decision.get("approved"):
-        return {"flight_approved": True}
-
-    return {
-        "flight_approved": False,
-        "pending_flight": None,
-        "phase": "searching_flights",
-        "messages": [
-            AIMessage(
-                content=(
-                    "Flight booking was not approved. "
-                    "Let me know if you want to search for other flights."
+    if not decision.get("approved"):
+        return {
+            "pending_flight": None,
+            "phase": "searching_flights",
+            "messages": [
+                AIMessage(
+                    content=(
+                        "Flight booking was not approved. "
+                        "Let me know if you want to search for other flights."
+                    )
                 )
-            )
-        ],
-    }
+            ],
+        }
 
-
-async def book_and_save_node(state: TravelState) -> dict:
-    pending = state.get("pending_flight")
     trip_id = state.get("trip_id")
     user_id = state.get("user_id")
-
-    if not pending or not trip_id or not user_id:
+    if not trip_id or not user_id:
         return {
+            "pending_flight": None,
+            "phase": "searching_flights",
             "messages": [
                 AIMessage(
                     content=(
@@ -169,16 +164,13 @@ async def book_and_save_node(state: TravelState) -> dict:
                     )
                 )
             ],
-            "flight_approved": None,
         }
 
-    flight = _flight_details_from_state(pending)
     await book_flight.ainvoke({"flight_details": flight})
     await tripService.add_flight_to_trip(trip_id, user_id, flight)
 
     return {
         "pending_flight": None,
-        "flight_approved": None,
         "phase": "flight_booked",
         "messages": [
             AIMessage(

@@ -3,14 +3,12 @@ from langgraph.graph import END, START, StateGraph
 from langgraph.checkpoint.mongodb import MongoDBSaver
 
 from app.agent.nodes import (
-    book_and_save_node,
-    flight_approval_node,
+    confirm_booking_node,
     make_agent_node,
     tool_node,
 )
 from app.agent.routing import (
     route_after_agent,
-    route_after_approval,
     route_after_tools,
 )
 from app.config.settings import get_settings
@@ -28,22 +26,16 @@ def build_travel_graph():
     builder = StateGraph(TravelState)
     builder.add_node("agent", make_agent_node(llm))
     builder.add_node("tools", tool_node)
-    builder.add_node("flight_approval", flight_approval_node)
-    builder.add_node("book_and_save", book_and_save_node)
+    builder.add_node("confirm_booking", confirm_booking_node)
 
     builder.add_edge(START, "agent")
     builder.add_conditional_edges("agent", route_after_agent, ["tools", END])
     builder.add_conditional_edges(
         "tools",
         route_after_tools,
-        ["agent", "flight_approval"],
+        ["agent", "confirm_booking"],
     )
-    builder.add_conditional_edges(
-        "flight_approval",
-        route_after_approval,
-        ["book_and_save", "agent"],
-    )
-    builder.add_edge("book_and_save", "agent")
+    builder.add_edge("confirm_booking", "agent")
 
     checkpointer = MongoDBSaver(
         get_client(),

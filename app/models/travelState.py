@@ -13,10 +13,8 @@ class TravelState(TypedDict, total=False):
         "idle",
         "planning_trip",
         "searching_flights",
-        "awaiting_flight_approval",
         "flight_booked",
         "planning_visits",
     ]
     flight_options: list[dict] | None
     pending_flight: FlightDetails | dict | None
-    flight_approved: bool | None
